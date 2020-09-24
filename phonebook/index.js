@@ -1,8 +1,10 @@
 // Imports
 const express = require("express");
+const morgan = require('morgan');
 
 // Server App Definition
 const app = express();
+app.use(morgan('tiny'));
 app.use(express.json());
 
 // Hardcoded PhoneBook Contacts
