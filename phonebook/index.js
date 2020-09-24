@@ -1,11 +1,33 @@
 // Imports
 const express = require("express");
-const morgan = require('morgan');
+const morgan = require("morgan");
+
+// Register a new custom morgan token
+morgan.token("customtoken", (req, res) => {
+  // It needs string output so, stringyfy
+  return JSON.stringify(req.body);
+});
 
 // Server App Definition
 const app = express();
-app.use(morgan('tiny'));
 app.use(express.json());
+
+// Use this after express.json because, express.json creates req.body which
+// this middleware needs
+app.use(
+  morgan(function (tokens, req, res) {
+    return [
+      tokens.method(req, res),
+      tokens.url(req, res),
+      tokens.status(req, res),
+      tokens.res(req, res, "content-length"),
+      "-",
+      tokens["response-time"](req, res),
+      "ms",
+      tokens.customtoken(req, res),
+    ].join(" ");
+  })
+);
 
 // Hardcoded PhoneBook Contacts
 let persons = [
