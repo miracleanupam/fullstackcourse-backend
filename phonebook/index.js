@@ -29,10 +29,23 @@ const persons = [
   },
 ];
 
+// List all contacts, return 'application/json'
 app.get('/api/persons', (req, res) => {
     res.json(persons);
 })
 
+// Return json for person detail, 404 if not found
+app.get('/api/persons/:id', (req, res) => {
+    const id = Number(req.params.id);
+    const person = persons.find(p => p.id === id);
+    if (person) {
+        return res.json(person);
+    } else {
+        return res.status(404).send();
+    }
+})
+
+// List the number of contacts at a time, return 'text/html'
 app.get('/info', (req, res) => {
     const res_html = `<p>Phonebook has info for ${persons.length} people. </p><p>${new Date()}</p>`;
     res.send(res_html);
