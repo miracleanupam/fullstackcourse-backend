@@ -122,7 +122,7 @@ app.post("/persons", (req, res) => {
 });
 
 // Port to run the server on
-const PORT = 3001;
+const PORT = process.env || 3001;
 // Attach app to port
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
