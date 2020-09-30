@@ -6,4 +6,4 @@ git subtree push --prefix phonebook remote-name branch-name
 ```
 
 ## Online Application
-https://phonebook-fsad.herokuapp.com/persons
+https://phonebook-fsad.herokuapp.com
