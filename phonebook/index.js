@@ -1,6 +1,7 @@
 // Imports
 const express = require("express");
 const morgan = require("morgan");
+const cors = require("cors");
 
 // Register a new custom morgan token
 morgan.token("customtoken", (req, res) => {
@@ -11,6 +12,7 @@ morgan.token("customtoken", (req, res) => {
 // Server App Definition
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 // Use this after express.json because, express.json creates req.body which
 // this middleware needs
@@ -60,12 +62,12 @@ const generateId = () => {
 };
 
 // List all contacts, return 'application/json'
-app.get("/api/persons", (req, res) => {
+app.get("/persons", (req, res) => {
   res.json(persons);
 });
 
 // Return json for person detail, 404 if not found
-app.get("/api/persons/:id", (req, res) => {
+app.get("/persons/:id", (req, res) => {
   const id = Number(req.params.id);
   const person = persons.find((p) => p.id === id);
   if (person) {
@@ -84,7 +86,7 @@ app.get("/info", (req, res) => {
 });
 
 // Delete the perons contact, send 204 regardless of the contact exists or not
-app.delete("/api/persons/:id", (req, res) => {
+app.delete("/persons/:id", (req, res) => {
   const id = Number(req.params.id);
   persons = persons.filter((p) => p.id !== id);
 
@@ -92,7 +94,7 @@ app.delete("/api/persons/:id", (req, res) => {
 });
 
 // Endpoint for adding a phonebook contact
-app.post("/api/persons", (req, res) => {
+app.post("/persons", (req, res) => {
   const body = req.body;
 
   if (!body.name || !body.number) {
