@@ -47,14 +47,8 @@ const errorHandler = (error, req, res, next) => {
   next(error);
 };
 
-// Generate Id randomly, with range upto 100000
-const generateId = () => {
-  const limit = 100000;
-  return Math.floor(Math.random() * Math.floor(limit));
-};
-
 // List all contacts, return 'application/json'
-app.get("/persons", (req, res) => {
+app.get("/persons", (req, res, next) => {
   Contact.find({})
     .then((result) => {
       res.json(result);
@@ -63,12 +57,11 @@ app.get("/persons", (req, res) => {
 });
 
 // Return json for person detail, 404 if not found
-app.get("/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  Contact.find({ id: id })
+app.get("/persons/:id", (req, res, next) => {
+  const id = req.params.id;
+  Contact.findById(id)
     .then((contact) => {
-      console.log(contact);
-      if (contact.length > 0) {
+      if (contact) {
         res.json(contact);
       } else {
         res.status(404).send();
@@ -86,9 +79,9 @@ app.get("/info", (req, res) => {
 });
 
 // Delete the perons contact, send 204 regardless of the contact exists or not
-app.delete("/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  Contact.findOneAndDelete({ id: id })
+app.delete("/persons/:id", (req, res, next) => {
+  const id = req.params.id;
+  Contact.findByIdAndDelete(id)
     .then((result) => {
       res.status(204).end();
     })
@@ -96,33 +89,49 @@ app.delete("/persons/:id", (req, res) => {
 });
 
 // Endpoint for adding a phonebook contact
-app.post("/persons", (req, res) => {
+app.post("/persons", (req, res, next) => {
   const body = req.body;
 
   if (!body.name || !body.number) {
     return res.status(400).json({
-      error: "Bad Request: Content Missing",
+      error: "Bad Request",
     });
   }
-
-  // Check if the name already exists
-  // const exists = persons.find((p) => p.name === body.name);
-  // if (exists) {
-  //   return res.status(409).json({
-  //     error: "name must be unique",
-  //   });
-  // }
 
   const contact = new Contact({
     name: body.name,
     number: body.number,
-    id: generateId(),
   });
 
   contact
     .save()
     .then((savedContact) => {
       res.json(savedContact);
+    })
+    .catch((error) => next(error));
+});
+
+app.put("/persons/:id", (req, res) => {
+  const id = req.params.id;
+
+  const body = req.body;
+
+  if (!body.name || !body.number) {
+    return res.status(400).json({
+      error: "Bad Request",
+    });
+  }
+
+  const contact = {
+    name: body.name,
+    number: body.number,
+  };
+
+  // Without the third option, findOneAndUpdate returns the old object
+  // I need new updated result
+  Contact.findByIdAndUpdate(id, contact, { new: true })
+    .then((updatedContact) => {
+      res.json(updatedContact);
     })
     .catch((error) => next(error));
 });
