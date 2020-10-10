@@ -1,9 +1,9 @@
 // Imports
-require('dotenv').config();
+require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
-const Contact = require('./models/phoneBook');
+const Contact = require("./models/phoneBook");
 
 // Register a new custom morgan token
 morgan.token("customtoken", (req, res) => {
@@ -13,7 +13,7 @@ morgan.token("customtoken", (req, res) => {
 
 // Server App Definition
 const app = express();
-app.use(express.static('build'));
+app.use(express.static("build"));
 app.use(express.json());
 app.use(cors());
 
@@ -34,6 +34,19 @@ app.use(
   })
 );
 
+// Error handler middleware
+const errorHandler = (error, req, res, next) => {
+  console.error(error.message);
+  console.error(error.name);
+  if (error.name === "CastError") {
+    return res.status(400).send({ error: "Bad Request" });
+  } else {
+    return res.status(500).send({ error: "Something Went Wrong" });
+  }
+
+  next(error);
+};
+
 // Generate Id randomly, with range upto 100000
 const generateId = () => {
   const limit = 100000;
@@ -42,17 +55,26 @@ const generateId = () => {
 
 // List all contacts, return 'application/json'
 app.get("/persons", (req, res) => {
-  Contact.find({}).then(result => {
-    res.json(result);
-  });
+  Contact.find({})
+    .then((result) => {
+      res.json(result);
+    })
+    .catch((error) => next(error));
 });
 
 // Return json for person detail, 404 if not found
 app.get("/persons/:id", (req, res) => {
   const id = Number(req.params.id);
-  Contact.find({ id: id }).then(contact => {
-    res.json(contact);
-  })
+  Contact.find({ id: id })
+    .then((contact) => {
+      console.log(contact);
+      if (contact.length > 0) {
+        res.json(contact);
+      } else {
+        res.status(404).send();
+      }
+    })
+    .catch((error) => next(error));
 });
 
 // List the number of contacts at a time, return 'text/html'
@@ -66,9 +88,11 @@ app.get("/info", (req, res) => {
 // Delete the perons contact, send 204 regardless of the contact exists or not
 app.delete("/persons/:id", (req, res) => {
   const id = Number(req.params.id);
-  Contact.findOneAndDelete({ id: id }).then(result => {
-    res.status(204).end();
-  })
+  Contact.findOneAndDelete({ id: id })
+    .then((result) => {
+      res.status(204).end();
+    })
+    .catch((error) => next(error));
 });
 
 // Endpoint for adding a phonebook contact
@@ -95,10 +119,15 @@ app.post("/persons", (req, res) => {
     id: generateId(),
   });
 
-  contact.save().then(savedContact => {
-    res.json(savedContact);
-  })
+  contact
+    .save()
+    .then((savedContact) => {
+      res.json(savedContact);
+    })
+    .catch((error) => next(error));
 });
+
+app.use(errorHandler);
 
 // Port to run the server on
 const PORT = process.env.PORT;
