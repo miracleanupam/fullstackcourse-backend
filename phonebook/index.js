@@ -66,9 +66,9 @@ app.get("/info", (req, res) => {
 // Delete the perons contact, send 204 regardless of the contact exists or not
 app.delete("/persons/:id", (req, res) => {
   const id = Number(req.params.id);
-  persons = persons.filter((p) => p.id !== id);
-
-  res.status(204).send();
+  Contact.findOneAndDelete({ id: id }).then(result => {
+    res.status(204).end();
+  })
 });
 
 // Endpoint for adding a phonebook contact
