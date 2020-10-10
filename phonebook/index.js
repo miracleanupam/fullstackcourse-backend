@@ -71,11 +71,11 @@ app.get("/persons/:id", (req, res, next) => {
 });
 
 // List the number of contacts at a time, return 'text/html'
-app.get("/info", (req, res) => {
-  const res_html = `<p>Phonebook has info for ${
-    persons.length
-  } people. </p><p>${new Date()}</p>`;
-  res.send(res_html);
+app.get("/info", (req, res, next) => {
+  Contact.count({}).then(result => {
+    const res_html = `<p>Phonebook has info for ${result} people. </p><p>${new Date()}</p>`;
+    res.send(res_html);
+  }).catch(error => next(error));
 });
 
 // Delete the perons contact, send 204 regardless of the contact exists or not
@@ -111,6 +111,7 @@ app.post("/persons", (req, res, next) => {
     .catch((error) => next(error));
 });
 
+// Endpoint to update phone numbers
 app.put("/persons/:id", (req, res) => {
   const id = req.params.id;
 
@@ -136,6 +137,7 @@ app.put("/persons/:id", (req, res) => {
     .catch((error) => next(error));
 });
 
+// Use error handler middleware at last
 app.use(errorHandler);
 
 // Port to run the server on
