@@ -1,7 +1,9 @@
 // Imports
+require('dotenv').config();
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
+const Contact = require('./models/phoneBook');
 
 // Register a new custom morgan token
 morgan.token("customtoken", (req, res) => {
@@ -32,30 +34,6 @@ app.use(
   })
 );
 
-// Hardcoded PhoneBook Contacts
-let persons = [
-  {
-    name: "Arto Hellas",
-    number: "040-123456",
-    id: 1,
-  },
-  {
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-    id: 2,
-  },
-  {
-    name: "Dan Abramov",
-    number: "12-43-234345",
-    id: 3,
-  },
-  {
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-    id: 4,
-  },
-];
-
 // Generate Id randomly, with range upto 100000
 const generateId = () => {
   const limit = 100000;
@@ -64,18 +42,17 @@ const generateId = () => {
 
 // List all contacts, return 'application/json'
 app.get("/persons", (req, res) => {
-  res.json(persons);
+  Contact.find({}).then(result => {
+    res.json(result);
+  });
 });
 
 // Return json for person detail, 404 if not found
 app.get("/persons/:id", (req, res) => {
   const id = Number(req.params.id);
-  const person = persons.find((p) => p.id === id);
-  if (person) {
-    return res.json(person);
-  } else {
-    return res.status(404).send();
-  }
+  Contact.find({ id: id }).then(contact => {
+    res.json(contact);
+  })
 });
 
 // List the number of contacts at a time, return 'text/html'
@@ -105,25 +82,26 @@ app.post("/persons", (req, res) => {
   }
 
   // Check if the name already exists
-  const exists = persons.find((p) => p.name === body.name);
-  if (exists) {
-    return res.status(409).json({
-      error: "name must be unique",
-    });
-  }
+  // const exists = persons.find((p) => p.name === body.name);
+  // if (exists) {
+  //   return res.status(409).json({
+  //     error: "name must be unique",
+  //   });
+  // }
 
-  const person = {
+  const contact = new Contact({
     name: body.name,
     number: body.number,
     id: generateId(),
-  };
+  });
 
-  persons = persons.concat(person);
-  return res.json(person);
+  contact.save().then(savedContact => {
+    res.json(savedContact);
+  })
 });
 
 // Port to run the server on
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 // Attach app to port
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
