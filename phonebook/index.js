@@ -36,12 +36,18 @@ app.use(
 
 // Error handler middleware
 const errorHandler = (error, req, res, next) => {
-  console.error(error.message);
+  console.error(error);
   console.error(error.name);
   if (error.name === "CastError") {
-    return res.status(400).send({ error: "Bad Request" });
+    return res.status(400).send({ error: "Bad Request", msg: error.message });
+  } else if (error.name === "ValidationError") {
+    return res
+      .status(400)
+      .send({ error: "Validation Error", msg: error.message });
+  } else if (error.name === "SyntaxError") {
+    return res.status(400).send({ error: "SyntaxError", msg: "Syntax Error" });
   } else {
-    return res.status(500).send({ error: "Something Went Wrong" });
+    return res.status(500).send({ error: "ServerError", msg: "Something Went Wrong" });
   }
 
   next(error);
@@ -72,10 +78,12 @@ app.get("/persons/:id", (req, res, next) => {
 
 // List the number of contacts at a time, return 'text/html'
 app.get("/info", (req, res, next) => {
-  Contact.count({}).then(result => {
-    const res_html = `<p>Phonebook has info for ${result} people. </p><p>${new Date()}</p>`;
-    res.send(res_html);
-  }).catch(error => next(error));
+  Contact.count({})
+    .then((result) => {
+      const res_html = `<p>Phonebook has info for ${result} people. </p><p>${new Date()}</p>`;
+      res.send(res_html);
+    })
+    .catch((error) => next(error));
 });
 
 // Delete the perons contact, send 204 regardless of the contact exists or not
@@ -92,12 +100,6 @@ app.delete("/persons/:id", (req, res, next) => {
 app.post("/persons", (req, res, next) => {
   const body = req.body;
 
-  if (!body.name || !body.number) {
-    return res.status(400).json({
-      error: "Bad Request",
-    });
-  }
-
   const contact = new Contact({
     name: body.name,
     number: body.number,
@@ -112,25 +114,18 @@ app.post("/persons", (req, res, next) => {
 });
 
 // Endpoint to update phone numbers
-app.put("/persons/:id", (req, res) => {
+app.put("/persons/:id", (req, res, next) => {
   const id = req.params.id;
 
   const body = req.body;
 
-  if (!body.name || !body.number) {
-    return res.status(400).json({
-      error: "Bad Request",
-    });
-  }
-
   const contact = {
-    name: body.name,
     number: body.number,
   };
 
   // Without the third option, findOneAndUpdate returns the old object
   // I need new updated result
-  Contact.findByIdAndUpdate(id, contact, { new: true })
+  Contact.findByIdAndUpdate(id, contact, { new: true, runValidators: true })
     .then((updatedContact) => {
       res.json(updatedContact);
     })
