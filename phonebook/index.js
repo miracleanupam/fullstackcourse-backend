@@ -46,9 +46,9 @@ const errorHandler = (error, req, res, next) => {
       .send({ error: "Validation Error", msg: error.message });
   } else if (error.name === "SyntaxError") {
     return res.status(400).send({ error: "SyntaxError", msg: "Syntax Error" });
-  } else {
-    return res.status(500).send({ error: "ServerError", msg: "Something Went Wrong" });
-  }
+  } // else {
+  //  return res.status(500).send({ error: "ServerError", msg: "Something Went Wrong" });
+  //}
 
   next(error);
 };
